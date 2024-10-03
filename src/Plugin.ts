@@ -1,45 +1,24 @@
-import type { BeforeFileTranspileEvent, CompilerPlugin } from 'brighterscript';
-import { Parser, WalkMode, createVisitor, isBrsFile, isXmlFile } from 'brighterscript';
-import SGParser from 'brighterscript/dist/parser/SGParser';
-import { SGChildren } from 'brighterscript/dist/parser/SGTypes';
+import type { AstEditor, CompilerPlugin, Program, TranspileObj } from 'brighterscript';
+import { FileValidator } from './FileValidator';
+import { FileTranspiler } from './FileTranspilers';
 
 export class Plugin implements CompilerPlugin {
-	name = 'bsc-plugin-awesome';
+	name = 'bsc-plugin-inline-annotation';
 
-	beforeFileTranspile(event: BeforeFileTranspileEvent) {
-		if (isBrsFile(event.file)) {
-			event.file.ast.walk(createVisitor({
-				FunctionStatement: (functionStatement) => {
-					const printStatement = Parser.parse(`print "hello from ${functionStatement.name.text}"`).statements[0];
+	private fileValidator = new FileValidator();
+	private fileTranspiler = new FileTranspiler();
+	afterProgramValidate(program: Program) {
+		this.fileValidator.reset();
 
-					//prepend a print statement to the top of every function body
-					event.editor.arrayUnshift(functionStatement.func.body.statements, printStatement);
-				}
-			}), {
-				walkMode: WalkMode.visitAllRecursive
-			});
+		// Get a map of all annotated functions
+		for (const file of Object.values(program.files)) {
+			this.fileValidator.findAnnotations(file);
+		}
+	}
 
-		} else if (isXmlFile(event.file)) {
-			//prepend a label to every xml file (why? just for fun....)
-			const parser = new SGParser();
-			parser.parse('generated.xml', `
-				<component name="Generated">
-					<children>
-						<label text="Hello from ${event.file.ast.component!.name}" />
-					</children>
-				</component>
-			`);
-
-			const label = parser.ast.component!.children.children[0];
-
-			//ensure the <children> component exists
-			if (!event.file.ast.component!.children) {
-				event.file.ast.component!.children = new SGChildren();
-			}
-			event.editor.arrayUnshift(
-				event.file.ast.component!.children.children,
-				label
-			);
+	beforeProgramTranspile(program: Program, entries: TranspileObj[], editor: AstEditor) {
+		for (const entry of entries) {
+			this.fileTranspiler.preprocess(entry.file, editor, this.fileValidator.annotatedFunctions);
 		}
 	}
 }
