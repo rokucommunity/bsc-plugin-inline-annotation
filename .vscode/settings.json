@@ -15,10 +15,15 @@
         "**/bower_components": true,
         "**/dist": true
     },
+    "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
     "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
     "files.trimTrailingWhitespace": true,
-    "typescript.tsdk": "node_modules\\typescript\\lib"
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "cSpell.words": [
+        "brighterscript",
+        "undent"
+    ]
 }
