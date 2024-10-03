@@ -1,7 +1,7 @@
 import type { BscFile, FunctionStatement } from 'brighterscript';
 import { isCommentStatement } from 'brighterscript';
 import { isReturnStatement } from 'brighterscript';
-import { BsDiagnostic, ParseMode } from 'brighterscript';
+import { ParseMode } from 'brighterscript';
 import { AstEditor, createVisitor, isBrsFile, WalkMode } from 'brighterscript';
 import { diagnostics } from './diagnostics';
 
