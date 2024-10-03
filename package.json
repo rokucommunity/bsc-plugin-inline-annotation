@@ -11,8 +11,10 @@
     "build": "rimraf out && tsc",
     "lint": "eslint \"src/**\"",
     "preversion": "npm run build && npm run lint && npm run test",
+    "test:nocover": "mocha",
     "test": "nyc mocha",
-    "watch": "rimraf out && tsc --watch"
+    "watch": "rimraf out && tsc --watch",
+    "publish-coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "author": "",
   "license": "MIT",
