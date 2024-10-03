@@ -10,6 +10,9 @@ on:
 jobs:
   ci:
     runs-on: ${{ matrix.os }}
+    env:
+      #hardcode the coveralls token...it's not overly important to protect, and github actions won't allow forks to work with coveralls otherwise
+      COVERALLS_REPO_TOKEN: "OqDqbWVvJMoMlIhpgvFlSygtDJufce50v"
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -18,10 +21,12 @@ jobs:
       - uses: actions/setup-node@master
         with:
           node-version: "16.20.2"
+          architecture: 'x64' # fix for macos-latest
       - run: npm ci
       - run: npm run build
       - run: npm run lint
       - run: npm run test
+      - run: npm run publish-coverage
   npm-release:
     #only run this task if a tag starting with 'v' was used to trigger this (i.e. a tagged release)
     if: startsWith(github.ref, 'refs/tags/v')
@@ -34,6 +39,7 @@ jobs:
       - uses: actions/setup-node@master
         with:
           node-version: "16.20.2"
+          architecture: 'x64' # fix for macos-latest
       - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ./.npmrc
       - run: npm ci
       - run: npm run build
