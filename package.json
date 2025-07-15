@@ -14,7 +14,8 @@
     "test:nocover": "mocha",
     "test": "nyc mocha",
     "watch": "rimraf out && tsc --watch",
-    "publish-coverage": "nyc report --reporter=text-lcov | coveralls"
+    "publish-coverage": "nyc report --reporter=text-lcov | coveralls",
+    "package": "npm run build && npm pack"
   },
   "author": "",
   "license": "MIT",
