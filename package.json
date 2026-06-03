@@ -19,6 +19,7 @@
   },
   "author": "",
   "license": "MIT",
+  "repository": "https://github.com/rokucommunity/bsc-plugin-inline-annotation",
   "devDependencies": {
     "@types/chai": "^4.1.2",
     "@types/fs-extra": "^8.0.0",
