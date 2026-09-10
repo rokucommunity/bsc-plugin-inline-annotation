@@ -46,18 +46,6 @@
     "typescript-formatter": "^7.2.2",
     "undent": "^0.1.0"
   },
-  "mocha": {
-    "spec": "src/**/*.spec.ts",
-    "require": [
-      "source-map-support/register",
-      "ts-node/register"
-    ],
-    "fullTrace": true,
-    "timeout": 2000,
-    "watchExtensions": [
-      "ts"
-    ]
-  },
   "nyc": {
     "include": [
       "src/**/*.ts",
