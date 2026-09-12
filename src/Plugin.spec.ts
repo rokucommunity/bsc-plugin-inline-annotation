@@ -1,4 +1,4 @@
-import { Program, standardizePath as s } from 'brighterscript';
+import { Program, standardizePath as s, util } from 'brighterscript';
 import * as fsExtra from 'fs-extra';
 import { Plugin } from './Plugin';
 import undent from 'undent';
@@ -25,25 +25,16 @@ describe('Plugin', () => {
         fsExtra.removeSync(tempDir);
     });
 
-    it('adds a leading print statement to every named function', async () => {
+    it('Verifies basic annotation support', async () => {
         program.setFile('source/main.bs', `
-            sub main()
-                m.name = "main"
+            sub init()
+                print subtract(5,3)
             end sub
 
-            function temp()
-                m.name = "temp"
+            @inline
+            function subtract(a, b) as integer
+                return a - b
             end function
-        `);
-        program.setFile('components/CustomButton.xml', `
-            <component name="CustomButton" extends="Button">
-                <script type="text/brightscript" uri="CustomButton.brs" />
-            </component>
-        `);
-        program.setFile('components/CustomButton.brs', `
-            sub init()
-                m.name = "init"
-            end sub
         `);
 
         //make sure there are no diagnostics
@@ -56,38 +47,68 @@ describe('Plugin', () => {
         expect(
             (await program.getTranspiledFileContents('source/main.bs')).code
         ).to.eql(undent`
-            sub main()
-                print "hello from main"
-                m.name = "main"
+            sub init()
+                print (5 - 3)
             end sub
 
-            function temp()
-                print "hello from temp"
-                m.name = "temp"
+            function subtract(a, b) as integer
+                return a - b
+            end function
+        `);
+    });
+
+    it('Verifies inlineable function body must be a single return statement', () => {
+        program.setFile('source/main.bs', `
+            sub init()
+                print subtract(5,3)
+            end sub
+
+            @inline
+            function subtract(a, b) as integer
+                value = a - b
+                return value
             end function
         `);
 
-
-
+        //make sure there are no diagnostics
+        program.validate();
         expect(
-            undent((await program.getTranspiledFileContents('components/CustomButton.xml')).code)
-        ).to.eql(undent`
-            <component name="CustomButton" extends="Button">
-                <script type="text/brightscript" uri="CustomButton.brs" />
-                <script type="text/brightscript" uri="pkg:/source/bslib.brs" />
-                <children>
-                    <label text="Hello from CustomButton" />
-                </children>
-            </component>
-        `);
+            program.getDiagnostics().map(x => {
+                return {
+                    message: x.message,
+                    range: x.range
+                };
+            })
+        ).to.eql([{
+            message: 'Inlineable function body must be a single return statement',
+            range: util.createRange(8, 16, 8, 28)
+        }]);
+    });
 
-        expect(
-            (await program.getTranspiledFileContents('components/CustomButton.brs')).code
-        ).to.eql(undent`
+    it('vvv', () => {
+        program.setFile('source/main.bs', `
             sub init()
-                print "hello from init"
-                m.name = "init"
+                print subtract(5,3)
             end sub
+
+            @inline
+            function subtract(a, b) as integer
+                value = a - b
+            end function
         `);
+
+        //make sure there are no diagnostics
+        program.validate();
+        expect(
+            program.getDiagnostics().map(x => {
+                return {
+                    message: x.message,
+                    range: x.range
+                };
+            })
+        ).to.eql([{
+            message: 'Inlineable function body must be a single return statement',
+            range: util.createRange(7, 16, 7, 29)
+        }]);
     });
 });
