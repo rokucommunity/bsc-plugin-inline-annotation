@@ -1,32 +1,30 @@
-import type { AstEditor, FunctionStatement, BrsFile, BscFile, Identifier, CallExpression, Expression, ReturnStatement, Statement, AssignmentStatement } from 'brighterscript';
-import { isBrsFile, Parser, WalkMode, createVisitor, util as bscUtil, isExpressionStatement, GroupingExpression, createToken, TokenKind, isCommentStatement } from 'brighterscript';
+import type { Editor, FunctionStatement, BrsFile, BscFile, Identifier, CallExpression, Expression, ReturnStatement, Statement, AssignmentStatement } from 'brighterscript';
+import { isBrsFile, Parser, WalkMode, createVisitor, util as bscUtil, isExpressionStatement, GroupingExpression, createToken, TokenKind } from 'brighterscript';
 
 import { BrsTranspileState } from 'brighterscript/dist/parser/BrsTranspileState';
 import { SourceNode } from 'source-map';
 
 export class FileTranspiler {
-	public preprocess(file: BscFile, editor: AstEditor, annotatedFunctions: Map<string, FunctionStatement>) {
+	public preprocess(file: BscFile, editor: Editor, annotatedFunctions: Map<string, FunctionStatement>) {
 		if (isBrsFile(file)) {
 			this.walkBscExpressions(file, editor, annotatedFunctions);
 		}
 	}
-	private walkBscExpressions(file: BscFile, editor: AstEditor, annotatedFunctions: Map<string, FunctionStatement>) {
-		if (isBrsFile(file)) {
-			file.ast.walk(createVisitor({
-				CallExpression: (call) => {
-					const parts = bscUtil.getAllDottedGetParts(call.callee);
-					return (
-						this.inlineCall(file, editor, call, parts ?? [], annotatedFunctions)
-					);
-				}
-			}), {
-				walkMode: WalkMode.visitAllRecursive,
-				editor: editor
-			});
-		}
+	private walkBscExpressions(file: BrsFile, editor: Editor, annotatedFunctions: Map<string, FunctionStatement>) {
+		file.ast.walk(createVisitor({
+			CallExpression: (call) => {
+				const parts = bscUtil.getAllDottedGetParts(call.callee);
+				return (
+					this.inlineCall(file, editor, call, parts ?? [], annotatedFunctions)
+				);
+			}
+		}), {
+			walkMode: WalkMode.visitAllRecursive,
+			editor: editor
+		});
 	}
 
-	private inlineCall(file: BrsFile, editor: AstEditor, call: CallExpression, parts: Identifier[], annotatedFunctions: Map<string, FunctionStatement>) {
+	private inlineCall(file: BrsFile, editor: Editor, call: CallExpression, parts: Identifier[], annotatedFunctions: Map<string, FunctionStatement>) {
 		const fullFunctionName = parts?.map(x => x.text).join('.').toLowerCase();
 		const annotatedFunction = annotatedFunctions.get(fullFunctionName);
 		if (annotatedFunction) {
@@ -35,13 +33,13 @@ export class FileTranspiler {
 			for (let index = 0; index < annotatedFunction.func.parameters.length; index++) {
 				const annotatedParameter = annotatedFunction.func.parameters[index];
 				const callArgument = call.args[index] ?? annotatedParameter?.defaultValue;
-				parameterMap.set(annotatedParameter.name.text, callArgument);
+				parameterMap.set(annotatedParameter.tokens.name.text, callArgument);
 			}
 
-			const clonedStatement = this.cloneStatement<ReturnStatement>(annotatedFunction.func.body.statements.filter(x => !isCommentStatement(x))[0], file);
+			const clonedStatement = this.cloneStatement<ReturnStatement>(annotatedFunction.func.body.statements[0]);
 			clonedStatement.walk(createVisitor({
-				VariableExpression: (variable, parent?, owner?, key?) => {
-					const arg = parameterMap.get(variable.name.text);
+				VariableExpression: (variable) => {
+					const arg = parameterMap.get(variable.tokens.name.text);
 					if (arg) {
 						return this.cloneExpression(arg, file);
 					}
@@ -55,14 +53,15 @@ export class FileTranspiler {
 				return clonedStatement.value;
 			} else {
 				return new GroupingExpression({
-					left: createToken(TokenKind.LeftParen),
-					right: createToken(TokenKind.RightParen)
-				}, clonedStatement.value!);
+					leftParen: createToken(TokenKind.LeftParen),
+					rightParen: createToken(TokenKind.RightParen),
+					expression: clonedStatement.value!
+				});
 			}
 		}
 	}
 
-	private cloneStatement<T>(statement: Statement, file: BrsFile) {
+	private cloneStatement<T>(statement: Statement) {
 		return statement.clone() as T;
 	}
 

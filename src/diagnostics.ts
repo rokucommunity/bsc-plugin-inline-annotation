@@ -1,11 +1,11 @@
-import type { Range } from 'brighterscript';
+import type { BsDiagnosticInput, DiagnosticLocationInput } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript';
 
 export const diagnostics = {
-	badAnnotationBody: (range: Range) => ({
+	badAnnotationBody: (location: DiagnosticLocationInput): BsDiagnosticInput => ({
 		message: 'Inlineable function body must be a single return statement',
 		code: 'bad-annotation-body',
 		severity: DiagnosticSeverity.Error,
-		range: range
+		location: location
 	})
 };
