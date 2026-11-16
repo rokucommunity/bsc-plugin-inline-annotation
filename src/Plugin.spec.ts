@@ -57,6 +57,79 @@ describe('Plugin', () => {
         `);
     });
 
+    it('inlines functions declared in a different file', async () => {
+        program.setFile('source/main.bs', `
+            sub init()
+                print subtract(5, 3)
+            end sub
+        `);
+        program.setFile('source/lib.bs', `
+            @inline
+            function subtract(a, b) as integer
+                return a - b
+            end function
+        `);
+
+        program.validate();
+        expect(
+            program.getDiagnostics().map(x => x.message)
+        ).to.eql([]);
+
+        expect(
+            (await program.getTranspiledFileContents('source/main.bs')).code
+        ).to.eql(undent`
+            sub init()
+                print (5 - 3)
+            end sub
+        `);
+    });
+
+    it('allows comments in the inlineable function body', async () => {
+        program.setFile('source/main.bs', `
+            sub init()
+                print subtract(5, 3)
+            end sub
+
+            @inline
+            function subtract(a, b) as integer
+                ' subtract the numbers
+                return a - b
+            end function
+        `);
+
+        program.validate();
+        expect(
+            program.getDiagnostics().map(x => x.message)
+        ).to.eql([]);
+
+        expect(
+            (await program.getTranspiledFileContents('source/main.bs')).code
+        ).to.include('print (5 - 3)');
+    });
+
+    it('does not leave the AST modified after a build', async () => {
+        program.setFile('source/main.bs', `
+            sub init()
+                print subtract(5, 3)
+            end sub
+
+            @inline
+            function subtract(a, b) as integer
+                return a - b
+            end function
+        `);
+
+        program.validate();
+        const first = (await program.getTranspiledFileContents('source/main.bs')).code;
+        program.validate();
+        expect(
+            program.getDiagnostics().map(x => x.message)
+        ).to.eql([]);
+        const second = (await program.getTranspiledFileContents('source/main.bs')).code;
+        expect(second).to.eql(first);
+        expect(second).to.include('print (5 - 3)');
+    });
+
     it('Verifies inlineable function body must be a single return statement', () => {
         program.setFile('source/main.bs', `
             sub init()
@@ -76,7 +149,7 @@ describe('Plugin', () => {
             program.getDiagnostics().map(x => {
                 return {
                     message: x.message,
-                    range: x.range
+                    range: x.location?.range
                 };
             })
         ).to.eql([{
@@ -103,7 +176,7 @@ describe('Plugin', () => {
             program.getDiagnostics().map(x => {
                 return {
                     message: x.message,
-                    range: x.range
+                    range: x.location?.range
                 };
             })
         ).to.eql([{

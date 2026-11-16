@@ -28,7 +28,7 @@
     "@types/sinon": "^9.0.4",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
-    "brighterscript": "^0.67.7",
+    "brighterscript": "https://github.com/rokucommunity/brighterscript/releases/download/v0.0.0-packages/brighterscript-1.0.0-alpha.57-v1.20261116135209.tgz",
     "chai": "^4.2.0",
     "coveralls-next": "^4.2.1",
     "eslint": "^8.16.0",
@@ -42,18 +42,6 @@
     "typescript": "^4.8.3",
     "typescript-formatter": "^7.2.2",
     "undent": "^0.1.0"
-  },
-  "mocha": {
-    "spec": "src/**/*.spec.ts",
-    "require": [
-      "source-map-support/register",
-      "ts-node/register"
-    ],
-    "fullTrace": true,
-    "timeout": 2000,
-    "watchExtensions": [
-      "ts"
-    ]
   },
   "nyc": {
     "include": [
