@@ -28,7 +28,7 @@
     "@types/sinon": "^9.0.4",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
-    "brighterscript": "https://github.com/rokucommunity/brighterscript/releases/download/v0.0.0-packages/brighterscript-1.0.0-alpha.57-master-to-v1-2026-11-16.20261116135050.tgz",
+    "brighterscript": "https://github.com/rokucommunity/brighterscript/releases/download/v0.0.0-packages/brighterscript-1.0.0-alpha.57-v1.20261116135209.tgz",
     "chai": "^4.2.0",
     "coveralls-next": "^4.2.1",
     "eslint": "^8.16.0",
